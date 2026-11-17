@@ -1,0 +1,1621 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>麻雀計算</title>
+    <meta name="application-name" content="麻雀計算" />
+    <meta property="og:title" content="麻雀計算" />
+    <meta property="og:site_name" content="麻雀計算" />
+    <meta name="twitter:title" content="麻雀計算" />
+    <meta name="description" content="麻雀の点数精算・点数表・手牌計算ができるアプリ" />
+    <meta property="og:description" content="麻雀の点数精算・点数表・手牌計算ができるアプリ" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #f2efe4;
+        --surface: #fffdf6;
+        --surface2: #eceadf;
+        --ink: #22302a;
+        --muted: #68766d;
+        --line: #ddd6c2;
+        --green: #17604a;
+        --green-deep: #0d4531;
+        --green-soft: #dcebe2;
+        --red: #bf3b2c;
+        --red-soft: #f7e3df;
+        --gold: #b98a1d;
+        --plus: #17604a;
+        --minus: #bf3b2c;
+        --tile-bg: #fffef8;
+        --tile-line: #cfc9b4;
+        --shadow: 0 1px 2px rgba(34, 48, 42, .12), 0 4px 14px rgba(34, 48, 42, .07);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0f1512;
+          --surface: #1a221d;
+          --surface2: #232d27;
+          --ink: #e9ede9;
+          --muted: #9db0a4;
+          --line: #33413a;
+          --green: #3fae85;
+          --green-deep: #123528;
+          --green-soft: #1e3a2e;
+          --red: #e0685a;
+          --red-soft: #402824;
+          --gold: #d9ab3c;
+          --plus: #4cc38a;
+          --minus: #e0685a;
+          --shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 14px rgba(0,0,0,.3);
+        }
+      }
+      * { box-sizing: border-box; }
+      html { -webkit-text-size-adjust: 100%; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Hiragino Sans", sans-serif;
+        line-height: 1.55;
+      }
+      button, select, input { font: inherit; color: inherit; }
+      button, [role="button"], select, summary, input:not([type="checkbox"], [type="radio"]) { min-height: 2.25rem; }
+      main { max-width: 660px; margin: 0 auto; padding: 0 14px 48px; }
+
+      /* ---------- tabs ---------- */
+      .tabbar {
+        position: sticky; top: 0; z-index: 20;
+        background: color-mix(in srgb, var(--bg) 88%, transparent);
+        backdrop-filter: blur(8px);
+        padding: 10px 0 8px;
+      }
+      .tabbar-inner {
+        display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px;
+        background: var(--surface2); border: 1px solid var(--line);
+        border-radius: 999px; padding: 4px;
+      }
+      .tab-btn {
+        border: 0; background: transparent; border-radius: 999px;
+        padding: 8px 2px; font-weight: 700; font-size: .92rem; cursor: pointer;
+        color: var(--muted); min-height: 2.75rem;
+      }
+      .tab-btn[aria-selected="true"] { background: var(--green); color: #fff; box-shadow: var(--shadow); }
+      @media (prefers-color-scheme: dark) { .tab-btn[aria-selected="true"] { color: #0d1f17; } }
+
+      section[hidden] { display: none; }
+      h2 { font-size: 1.15rem; margin: 22px 0 6px; font-weight: 800; }
+      h2:first-child { margin-top: 8px; }
+      .lead { color: var(--muted); font-size: .9rem; margin: 0 0 12px; }
+      .card {
+        background: var(--surface); border: 1px solid var(--line);
+        border-radius: 14px; padding: 14px; box-shadow: var(--shadow);
+      }
+      .note { font-size: .82rem; color: var(--muted); }
+      .warn {
+        background: var(--red-soft); color: var(--minus);
+        border-radius: 10px; padding: 8px 12px; font-size: .88rem; font-weight: 700;
+        margin-top: 10px;
+      }
+
+      /* ---------- 精算 ---------- */
+      .settings { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+      .settings label { display: flex; flex-direction: column; gap: 4px; font-size: .8rem; font-weight: 700; color: var(--muted); flex: 1 1 140px; }
+      .settings select {
+        background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+        padding: 6px 10px; font-weight: 700; color: var(--ink); min-height: 2.75rem;
+      }
+      .player {
+        display: grid; grid-template-columns: 34px 1fr; gap: 10px;
+        padding: 12px; margin-bottom: 10px; align-items: start;
+      }
+      .rank-badge {
+        width: 34px; height: 34px; border-radius: 50%;
+        background: var(--surface2); color: var(--muted);
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 800; font-size: .95rem; margin-top: 2px;
+      }
+      .player.rank1 .rank-badge { background: var(--gold); color: #fff; }
+      .player > div { min-width: 0; }
+      .player-top { display: flex; gap: 8px; min-width: 0; }
+      .player-name {
+        flex: 0 1 8.5em; min-width: 0; border: 1px solid var(--line); border-radius: 10px;
+        background: var(--surface); padding: 6px 10px; font-weight: 700; min-height: 2.75rem;
+      }
+      .player-score {
+        flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 10px;
+        background: var(--surface); padding: 6px 10px; font-weight: 800; font-size: 1.1rem;
+        text-align: right; min-height: 2.75rem;
+      }
+      .player-result { display: flex; align-items: baseline; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
+      .final-pt { font-size: 1.7rem; font-weight: 800; letter-spacing: .01em; }
+      .final-pt.plus { color: var(--plus); }
+      .final-pt.minus { color: var(--minus); }
+      .final-pt.zero { color: var(--muted); }
+      .breakdown { font-size: .8rem; color: var(--muted); }
+      .total-line { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; font-weight: 700; }
+      .btn {
+        border: 1px solid var(--line); background: var(--surface); border-radius: 10px;
+        padding: 8px 16px; font-weight: 700; cursor: pointer; min-height: 2.75rem;
+      }
+      .btn.primary { background: var(--green); border-color: var(--green); color: #fff; }
+      @media (prefers-color-scheme: dark) { .btn.primary { color: #0d1f17; } }
+      .btn:active { transform: translateY(1px); }
+      .btn.danger { background: var(--red); border-color: var(--red); color: #fff; }
+      .confirm-box {
+        margin-top: 12px; background: var(--red-soft); border: 1px solid var(--red);
+        border-radius: 10px; padding: 12px;
+      }
+      .confirm-box p { margin: 0 0 10px; font-weight: 700; font-size: .92rem; }
+      .confirm-box .confirm-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+      /* ---------- 精算の履歴表 ---------- */
+      .history-table th, .history-table td { padding: 7px 3px; font-size: .9rem; }
+      .history-table .name-input {
+        width: 100%; border: 0; background: transparent; color: #fff; font-weight: 700;
+        text-align: center; padding: 2px 0; font-size: .82rem; min-height: 2rem;
+      }
+      .history-table .name-input::placeholder { color: rgba(255,255,255,.65); }
+      .history-table tfoot th, .history-table tfoot td { background: var(--surface2); font-weight: 800; }
+      .history-table .total-row th, .history-table .total-row td { background: var(--surface2); font-weight: 800; border-bottom: 2px solid var(--line); }
+      .history-table .name-cell { display: flex; align-items: center; gap: 2px; }
+      .history-table .name-cell .name-input { flex: 1; min-width: 0; }
+      @media (max-width: 480px) {
+        .history-table th, .history-table td { padding: 7px 1px; }
+        .history-table .name-input { font-size: .58rem; letter-spacing: 0; padding: 2px 0; }
+        .history-table .crown { font-size: .6rem; }
+        .history-table .name-cell { gap: 0; }
+        .history-table th.del-head, .history-table td.del-cell { width: 1.9em; }
+        .history-table .row-del { min-width: 1.6rem; padding: 4px 0; }
+      }
+      .history-table .crown { font-size: .85rem; line-height: 1; flex: none; }
+      .history-table td.plus { color: var(--plus); font-weight: 700; }
+      .history-table td.minus { color: var(--minus); font-weight: 700; }
+      .history-table td.zero { color: var(--muted); }
+      .row-del {
+        border: 0; background: transparent; color: var(--muted); cursor: pointer;
+        font-size: 1rem; padding: 4px 2px; min-height: 2rem; min-width: 2rem; line-height: 1; vertical-align: middle;
+      }
+      .history-table th.del-head, .history-table td.del-cell { width: 2.4em; text-align: center; padding-left: 0; padding-right: 0; }
+      .entry-name {
+        flex: 0 1 8.5em; min-width: 0; display: flex; align-items: center;
+        font-weight: 700; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+      }
+      .auto-badge {
+        flex: none; align-self: center; background: var(--green); color: #fff;
+        border-radius: 999px; padding: 2px 9px; font-size: .72rem; font-weight: 800; white-space: nowrap;
+      }
+      @media (prefers-color-scheme: dark) { .auto-badge { color: #0d1f17; } }
+      .entry-score.auto-filled { background: var(--green-soft); border-color: var(--green); }
+
+      .top-actions { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+      .history-table tbody tr { cursor: pointer; }
+      .history-table tbody tr.editing-row th, .history-table tbody tr.editing-row td { background: var(--green-soft); }
+      .past-item {
+        display: flex; align-items: stretch; gap: 6px;
+        border: 1px solid var(--line); background: var(--surface); border-radius: 10px;
+        padding: 6px 6px 6px 12px; margin-bottom: 8px;
+      }
+      .past-item.active { border-color: var(--green); background: var(--green-soft); }
+      .past-item .past-meta { font-size: .8rem; color: var(--muted); font-weight: 700; white-space: nowrap; }
+      .past-load {
+        flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+        background: transparent; border: 0; font-weight: 700; cursor: pointer; min-height: 2.75rem;
+        text-align: left; color: inherit; padding: 4px 0; min-width: 0;
+      }
+      .past-load .past-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .past-edit-btn {
+        flex: none; align-self: center; width: 2.75rem; height: 2.75rem;
+        border: 1px solid var(--line); background: var(--surface2); border-radius: 10px;
+        cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--muted);
+      }
+      .past-rename { display: flex; gap: 6px; flex: 1; align-items: center; flex-wrap: wrap; }
+      .past-rename input {
+        flex: 1 1 130px; min-width: 0; border: 1px solid var(--line); border-radius: 10px;
+        padding: 6px 10px; font-weight: 700; min-height: 2.75rem; background: var(--surface);
+      }
+      .mode-badge { background: var(--green-soft); color: var(--green); border-radius: 999px; padding: 4px 12px; font-weight: 800; font-size: .85rem; }
+      .mode-choice { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+      .mode-choice .btn { flex: 1 1 130px; }
+
+      /* ---------- 点数表 ---------- */
+      .seg { display: inline-flex; background: var(--surface2); border: 1px solid var(--line); border-radius: 999px; padding: 3px; gap: 2px; }
+      .seg button {
+        border: 0; background: transparent; border-radius: 999px; padding: 6px 18px;
+        font-weight: 700; cursor: pointer; color: var(--muted); min-height: 2.5rem;
+      }
+      .seg button[aria-pressed="true"] { background: var(--green); color: #fff; }
+      @media (prefers-color-scheme: dark) { .seg button[aria-pressed="true"] { color: #0d1f17; } }
+      .table-wrap { margin-top: 12px; }
+      .ptable { width: 100%; border-collapse: collapse; font-size: .86rem; }
+      .ptable caption { text-align: left; font-weight: 800; padding: 4px 0 6px; font-size: .95rem; }
+      .ptable th, .ptable td { border: 1px solid var(--line); padding: 6px 4px; text-align: center; }
+      .ptable thead th { background: var(--green-deep); color: #fff; font-weight: 700; }
+      .ptable tbody th { background: var(--surface2); font-weight: 700; white-space: nowrap; }
+      .ptable td { font-variant-numeric: tabular-nums; }
+      .ptable td.empty { color: var(--muted); }
+      .calc-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+      .calc-grid label { display: flex; flex-direction: column; gap: 4px; font-size: .8rem; font-weight: 700; color: var(--muted); flex: 1 1 100px; }
+      .calc-grid select { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; font-weight: 700; color: var(--ink); min-height: 2.75rem; }
+      .calc-result { margin-top: 12px; font-size: 1.25rem; font-weight: 800; }
+      .limit-list { margin: 6px 0 0; padding-left: 1.2em; font-size: .9rem; }
+      .limit-list li { margin: 3px 0; }
+
+      /* ---------- tiles ---------- */
+      .tile {
+        display: inline-flex; flex-direction: column; align-items: center; justify-content: center;
+        background: linear-gradient(180deg, #fffef9, #f3efe0);
+        border: 1px solid var(--tile-line); border-bottom: 3px solid #b9b294;
+        border-radius: 6px; color: #26332c;
+        width: 34px; height: 46px; line-height: 1.05; flex: none;
+        font-weight: 800; user-select: none;
+      }
+      .tile .num { font-size: 1.02rem; }
+      .tile .suit { font-size: .62rem; font-weight: 700; }
+      .tile.m { color: #8f2f26; }
+      .tile.p { color: #20508f; }
+      .tile.s { color: #1e6b34; }
+      .tile.z { color: #26332c; font-size: 1.25rem; }
+      .tile.z.red { color: #bf3b2c; }
+      .tile.z.green { color: #1e6b34; }
+      .tile.aka .num { color: #d43a2a; }
+      .tile.aka .aka-mark { font-size: .52rem; color: #d43a2a; font-weight: 800; }
+      .tile.sm { width: 27px; height: 37px; }
+      .tile.sm .num { font-size: .85rem; }
+      .tile.sm.z { font-size: 1rem; }
+
+      /* ---------- 手牌計算 ---------- */
+      .step-head { display: flex; align-items: center; gap: 8px; margin: 22px 0 8px; }
+      .step-head:first-child { margin-top: 8px; }
+      .step-no {
+        width: 26px; height: 26px; border-radius: 50%; background: var(--green); color: #fff;
+        display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: .9rem; flex: none;
+      }
+      @media (prefers-color-scheme: dark) { .step-no { color: #0d1f17; } }
+      .step-head h2 { margin: 0; font-size: 1.05rem; }
+      .hand-slots {
+        display: flex; flex-wrap: wrap; gap: 4px; min-height: 52px;
+        background: var(--green-deep); border-radius: 12px; padding: 8px;
+        align-items: center;
+      }
+      .hand-slots .empty-msg { color: #cfe3d8; font-size: .88rem; padding: 4px; }
+      .hand-slots .tile { cursor: pointer; }
+      .hand-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; gap: 8px; flex-wrap: wrap; }
+      .count-badge { font-weight: 800; }
+      .count-badge.ok { color: var(--plus); }
+      .palette { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+      .palette-row { display: flex; align-items: flex-start; gap: 8px; }
+      .palette-label { font-size: .78rem; font-weight: 800; color: var(--muted); width: 2.6em; flex: none; padding-top: 10px; }
+      .palette-tiles { display: flex; flex-wrap: wrap; gap: 4px; }
+      .pal-btn {
+        border: 0; background: transparent; padding: 2px; cursor: pointer; border-radius: 8px;
+        min-height: 2.75rem; min-width: 2.25rem;
+      }
+      .pal-btn:disabled { opacity: .28; cursor: default; }
+      .pal-btn:active .tile { transform: translateY(1px); }
+      .wait-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 6px; }
+      .wait-chip {
+        display: inline-flex; align-items: center; gap: 5px;
+        background: var(--green-soft); border-radius: 999px; padding: 4px 10px 4px 5px;
+        font-size: .85rem; font-weight: 700;
+      }
+      .cond-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+      .cond-grid label { display: flex; flex-direction: column; gap: 4px; font-size: .8rem; font-weight: 700; color: var(--muted); flex: 1 1 120px; }
+      .cond-grid select { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; font-weight: 700; color: var(--ink); min-height: 2.75rem; }
+      .win-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+      .win-chip {
+        display: inline-flex; flex-direction: column; align-items: center; gap: 2px;
+        border: 2px solid var(--line); background: var(--surface); border-radius: 12px;
+        padding: 6px 8px; cursor: pointer; min-height: 2.75rem;
+      }
+      .win-chip[aria-pressed="true"] { border-color: var(--red); background: var(--red-soft); }
+      .win-chip .wc-name { font-size: .72rem; font-weight: 700; color: var(--muted); }
+      .result-card { border: 2px solid var(--green); }
+      .result-card.flash { animation: flash .55s ease; }
+      @keyframes flash {
+        0% { box-shadow: 0 0 0 0 rgba(191, 59, 44, .55); }
+        100% { box-shadow: 0 0 0 16px rgba(191, 59, 44, 0); }
+      }
+      @media (prefers-reduced-motion: reduce) { .result-card.flash { animation: none; } }
+      .result-score { font-size: 2rem; font-weight: 800; line-height: 1.2; }
+      .result-sub { font-weight: 700; color: var(--muted); margin-top: 2px; }
+      .yaku-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 4px; }
+      .yaku-chip {
+        background: var(--surface2); border: 1px solid var(--line); border-radius: 999px;
+        padding: 3px 11px; font-size: .85rem; font-weight: 700;
+      }
+      .yaku-chip.yakuman { background: var(--gold); color: #fff; border-color: var(--gold); }
+      .result-line { display: flex; gap: 14px; flex-wrap: wrap; font-weight: 700; margin-top: 6px; }
+      .change-note { font-size: .85rem; color: var(--red); font-weight: 700; margin-top: 6px; min-height: 1.2em; }
+      @media (prefers-color-scheme: dark) { .change-note { color: #e0685a; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <nav class="tabbar" aria-label="機能の切り替え">
+        <div class="tabbar-inner" role="tablist">
+          <button class="tab-btn" role="tab" id="tabbtn-seisan" aria-selected="true" data-tab="seisan">点数精算</button>
+          <button class="tab-btn" role="tab" id="tabbtn-table" aria-selected="false" data-tab="table">点数表</button>
+          <button class="tab-btn" role="tab" id="tabbtn-camera" aria-selected="false" data-tab="camera">手牌計算</button>
+        </div>
+      </nav>
+
+      <!-- ================= 点数精算 ================= -->
+      <section id="tab-seisan" role="tabpanel" aria-labelledby="tabbtn-seisan">
+        <h2>対局の記録と精算</h2>
+        <p class="lead">「記入する」から各回の持ち点を入れると、順位・ウマ・オカ込みの＋○○／−○○に変換して表に追加します。見出しのすぐ下の「合計」が各プレイヤーの通算で、現在トップのプレイヤーの名前には👑が付きます（同点トップは全員に付き、全員同点のときは付きません）。記録はすべて表示されるので、5回分以上の履歴もそのまま見られます。表の行をタップすると、その回の点数を編集できます。</p>
+
+        <div class="top-actions">
+          <button class="btn" id="new-match" type="button">新規</button>
+          <span class="mode-badge" id="mode-label">四人麻雀</span>
+          <span class="note">新しい対戦をはじめます（人数を選べます。今の対戦は下の「過去の対戦」に残ります）</span>
+        </div>
+
+        <div class="card" id="new-choice" hidden style="margin-bottom:12px;">
+          <p style="margin:0; font-weight:800;">新しい対戦は三人麻雀と四人麻雀のどちらで始めますか？</p>
+          <div class="mode-choice">
+            <button class="btn primary" id="new-4p" type="button">四人麻雀</button>
+            <button class="btn primary" id="new-3p" type="button">三人麻雀</button>
+            <button class="btn" id="new-cancel" type="button">キャンセル</button>
+          </div>
+          <p class="note" style="margin:8px 0 0;">三人麻雀を選ぶと、35,000点持ち・40,000点返しなど三人麻雀用の設定で始めます。</p>
+        </div>
+
+        <div class="settings">
+          <label>ウマ
+            <select id="uma-select">
+              <option value="10-20">10−20（ゴットー）</option>
+              <option value="10-30" selected>10−30（ワンスリー）</option>
+              <option value="20-30">20−30</option>
+              <option value="5-10">5−10</option>
+              <option value="0-0">なし</option>
+            </select>
+          </label>
+          <label>返し点（オカは1位に自動加算）
+            <select id="kaeshi-select">
+              <option value="30000" selected>30,000点（25,000点持ち）</option>
+              <option value="25000">25,000点（オカなし）</option>
+            </select>
+          </label>
+        </div>
+        <p class="note" id="sanma-note" hidden style="margin:0 2px 12px;">三人麻雀の設定です。1人35,000点持ち・3人の合計105,000点で計算し、ウマは選択肢に表示した配分（例：10−20なら1位+20／2位−10／3位−10）で加えます。どのプレイヤーから入力しても構いません。あと1人だけ入力していない状態になると、その残りの1人の点数が合計105,000点になるよう自動で計算されます。</p>
+
+        <div class="card" style="padding:10px;">
+          <div class="table-wrap" style="margin-top:0;">
+            <table class="ptable history-table">
+              <thead id="history-head"></thead>
+              <tbody id="history-body"></tbody>
+              <tfoot id="history-foot"></tfoot>
+            </table>
+          </div>
+          <p class="note" id="history-empty" style="margin:10px 2px 2px;">まだ記録がありません。「記入する」から1回目の点数を入れてください。表の名前はタップすると変更できます。</p>
+          <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn primary" id="open-entry" type="button">記入する</button>
+            <button class="btn" id="clear-history" type="button" hidden>記録をすべて消す</button>
+          </div>
+          <div class="confirm-box" id="clear-confirm" hidden role="alertdialog" aria-labelledby="clear-confirm-text" aria-describedby="clear-confirm-text">
+            <p id="clear-confirm-text">すべての記録を消しますか？</p>
+            <div class="confirm-actions">
+              <button class="btn danger" id="clear-confirm-yes" type="button">すべて消す</button>
+              <button class="btn" id="clear-confirm-no" type="button">キャンセル</button>
+            </div>
+          </div>
+          <div class="confirm-box" id="row-del-confirm" hidden role="alertdialog" aria-labelledby="row-del-confirm-text" aria-describedby="row-del-confirm-text">
+            <p id="row-del-confirm-text">この回の記録を削除しますか？</p>
+            <div class="confirm-actions">
+              <button class="btn danger" id="row-del-confirm-yes" type="button">削除する</button>
+              <button class="btn" id="row-del-confirm-no" type="button">キャンセル</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" id="entry-card" hidden style="margin-top:12px;">
+          <h3 id="entry-title" style="margin:0 0 4px; font-size:1rem;">1回目の点数を記入</h3>
+          <p class="note" id="entry-note" style="margin:0 0 10px;">対局後の持ち点を入れて「この回を記録する」を押すと、＋○○／−○○に変換して上の表に追加します。入力欄の上下ボタンでは100点ずつ変わります。どのプレイヤーから入力しても構いません。あと1人だけ入力していない状態になると、その残りの1人（最後に記入する人）の点数が合計100,000点になるよう自動で計算されて入り、「自動計算」の印が付きます。自動計算された人を手で直すと自動計算は解除されます。表の行をタップして開いた場合は、その回の編集になります（入力した値が入った状態で開きます）。</p>
+          <div id="entry-rows"></div>
+          <div class="total-line"><span id="entry-total-label">4人の合計</span><span id="entry-total">0点</span></div>
+          <div id="entry-warn" class="warn" hidden>合計が100,000点になっていません。入力した点数を確認してください（このまま記録はできますが、ポイントの合計は0になりません）。</div>
+          <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn primary" id="entry-save" type="button">この回を記録する</button>
+            <button class="btn" id="entry-cancel" type="button">キャンセル</button>
+          </div>
+        </div>
+
+        <p class="note" id="calc-note" style="margin:12px 2px 0;">計算方法：（点数 − 返し点）÷ 1,000 を四捨五入した素点に、順位ウマを加え、1位にはオカ（（返し点 − 25,000）× 4 ÷ 1,000 = 20.0）を加えます。同点の場合はウマとオカを等分します。ウマ・返し点を変更すると、記録済みの回も新しい設定で計算し直します。各行の右端の「×」でその回だけ削除でき（押すと確認が出ます）、行をタップするとその回を編集できます。</p>
+
+        <div class="card" style="margin-top:12px;">
+          <button class="btn" id="past-toggle" type="button" aria-expanded="false">過去の対戦</button>
+          <p class="note" id="past-empty" style="margin:10px 2px 2px;">まだ過去の対戦はありません。記入を完了すると、その対戦がここに自動で保存されます。</p>
+          <div id="past-list" hidden style="margin-top:10px;"></div>
+          <p class="note" style="margin:8px 2px 0;">対戦名をタップすると、そのときの表（点数・名前・ウマ・返し点・人数）を呼び出せます。右の鉛筆ボタンで対戦名を変更できます。記録はこのページを開いている間のみ保持されます。</p>
+        </div>
+      </section>
+
+      <!-- ================= 点数表 ================= -->
+      <section id="tab-table" role="tabpanel" aria-labelledby="tabbtn-table" hidden>
+        <h2>点数表</h2>
+        <p class="lead">かんたん計算ツールと、符×翻数の早見表です。</p>
+
+        <h2 style="margin-top:2px;">かんたん計算</h2>
+        <div class="card">
+          <div class="calc-grid">
+            <label>翻数
+              <select id="calc-han"></select>
+            </label>
+            <label>符
+              <select id="calc-fu"></select>
+            </label>
+            <label>親／子
+              <select id="calc-dealer">
+                <option value="0" selected>子</option>
+                <option value="1">親</option>
+              </select>
+            </label>
+            <label>あがり方
+              <select id="calc-tsumo">
+                <option value="0" selected>ロン</option>
+                <option value="1">ツモ</option>
+              </select>
+            </label>
+          </div>
+          <div class="calc-result" id="calc-result"></div>
+        </div>
+
+        <h2>早見表</h2>
+        <div class="seg" role="group" aria-label="親と子">
+          <button type="button" id="tbl-child" aria-pressed="true">子</button>
+          <button type="button" id="tbl-dealer" aria-pressed="false">親</button>
+        </div>
+        <div class="table-wrap" id="table-ron"></div>
+        <div class="table-wrap" id="table-tsumo"></div>
+        <p class="note">七対子は25符固定（子ロン：1翻 800／2翻 1,600／3翻 3,200／4翻 6,400、親ロン：1翻 1,200／2翻 2,400／3翻 4,800／4翻 9,600）。ピンフツモは20符で計算します。</p>
+
+        <h2>満貫以上</h2>
+        <div class="card">
+          <ul class="limit-list" id="limit-list"></ul>
+        </div>
+
+      </section>
+
+      <!-- ================= 手牌計算 ================= -->
+      <section id="tab-camera" role="tabpanel" aria-labelledby="tabbtn-camera" hidden>
+        <div class="step-head"><span class="step-no">1</span><h2>手牌をタップで入力（13枚）</h2></div>
+        <p class="lead">リーチ宣言後の手牌（13枚・テンパイ）を、下のパレットをタップして登録してください。登録した牌をタップすると取り消せます。リーチ済みの手牌として計算します。</p>
+        <div class="hand-slots" id="hand-slots"><span class="empty-msg">まだ牌が登録されていません</span></div>
+        <div class="hand-meta">
+          <span class="count-badge" id="hand-count">0 / 13枚</span>
+          <button class="btn" id="hand-clear" type="button">すべて消す</button>
+        </div>
+        <div class="palette" id="palette"></div>
+        <div id="wait-area"></div>
+
+        <div class="step-head"><span class="step-no">2</span><h2>あがり牌と条件を選ぶ</h2></div>
+        <div class="card">
+          <div class="cond-grid">
+            <label>場風
+              <select id="cond-bakaze">
+                <option value="27" selected>東場</option>
+                <option value="28">南場</option>
+              </select>
+            </label>
+            <label>自風（東なら親）
+              <select id="cond-jikaze">
+                <option value="27">東（親）</option>
+                <option value="28" selected>南（子）</option>
+                <option value="29">西（子）</option>
+                <option value="30">北（子）</option>
+              </select>
+            </label>
+            <label>あがり方
+              <select id="cond-tsumo">
+                <option value="0" selected>ロン</option>
+                <option value="1">ツモ</option>
+              </select>
+            </label>
+          </div>
+          <p style="font-weight:700; margin:14px 0 0;">あがり牌（待ち牌から選択）</p>
+          <div class="win-chips" id="win-chips"></div>
+          <p class="note" id="win-note" style="margin:8px 0 0;">手牌を13枚登録すると、待ち牌があがり牌の候補になります。あがり牌やツモ／ロンを変えると、下の結果がその場で再計算されます。</p>
+        </div>
+
+        <div class="step-head"><span class="step-no">3</span><h2>計算結果</h2></div>
+        <div class="card result-card" id="result-card">
+          <div id="result-body"><p class="note" style="margin:0;">手牌13枚とあがり牌を選ぶと、役・符・点数を計算します。</p></div>
+          <div class="change-note" id="change-note"></div>
+        </div>
+        <p class="note">ドラは赤5のみ数えます（ドラ表示牌からのドラは数えません）。一発・裏ドラ・槓ドラは含みません。ダブルリーチには対応していません。</p>
+      </section>
+    </main>
+
+<script>
+"use strict";
+/* ============================================================
+   牌ユーティリティ  id: 0-8 萬子1-9 / 9-17 筒子 / 18-26 索子 / 27-33 字牌(東南西北白発中)
+   ============================================================ */
+const NUM_KANJI = ["一","二","三","四","五","六","七","八","九"];
+const HONOR = ["東","南","西","北","白","発","中"];
+function tileBase(id){ return id >= 34 ? [4,13,22][id-34] : id; } // 34,35,36 = 赤5
+function isRed(id){ return id >= 34; }
+function suitOf(id){ id = tileBase(id); return id < 9 ? 0 : id < 18 ? 1 : id < 27 ? 2 : 3; }
+function numOf(id){ id = tileBase(id); return id < 27 ? (id % 9) + 1 : 0; }
+function isHonor(id){ return tileBase(id) >= 27; }
+function isTerminal(id){ const n = numOf(id); return n === 1 || n === 9; }
+function isYaochu(id){ return isHonor(id) || isTerminal(id); }
+function tileName(id){
+  if (isRed(id)) return "赤5" + ["萬","筒","索"][suitOf(id)];
+  if (isHonor(id)) return HONOR[tileBase(id)-27];
+  return numOf(id) + ["萬","筒","索"][suitOf(id)];
+}
+function tileHTML(id, small){
+  const b = tileBase(id), s = suitOf(id);
+  let cls = "tile" + (small ? " sm" : "");
+  let inner = "";
+  if (b >= 27) {
+    cls += " z";
+    const ch = HONOR[b-27];
+    if (ch === "中") cls += " red";
+    if (ch === "発") cls += " green";
+    inner = ch === "白" ? '<span style="color:#20508f">白</span>' : ch;
+  } else {
+    cls += [" m"," p"," s"][s];
+    if (isRed(id)) cls += " aka";
+    inner = '<span class="num">' + numOf(id) + '</span><span class="suit">' + ["萬","筒","索"][s] + '</span>' +
+            (isRed(id) ? '<span class="aka-mark">赤</span>' : "");
+  }
+  return '<span class="' + cls + '">' + inner + '</span>';
+}
+function countsOf(tiles){ const c = new Array(34).fill(0); tiles.forEach(t => c[tileBase(t)]++); return c; }
+
+/* ============================================================
+   シャンテン数
+   ============================================================ */
+function generalShanten(counts){
+  let min = 8;
+  const c = counts.slice();
+  (function rec(m, t, pair){
+    let i = 0; while (i < 34 && c[i] === 0) i++;
+    if (i === 34) {
+      const sh = 8 - 2*m - Math.min(t, 4-m) - pair;
+      if (sh < min) min = sh;
+      return;
+    }
+    c[i]--; rec(m, t, pair); c[i]++;                       // 浮き牌として外す
+    if (c[i] >= 2 && !pair) { c[i] -= 2; rec(m, t, 1); c[i] += 2; }
+    if (c[i] >= 2 && pair)  { c[i] -= 2; rec(m, t+1, pair); c[i] += 2; }
+    if (c[i] >= 3) { c[i] -= 3; rec(m+1, t, pair); c[i] += 3; }
+    if (i < 27) {
+      const n = i % 9;
+      if (n <= 6 && c[i+1] > 0 && c[i+2] > 0) { c[i]--; c[i+1]--; c[i+2]--; rec(m+1, t, pair); c[i]++; c[i+1]++; c[i+2]++; }
+      if (n <= 7 && c[i+1] > 0) { c[i]--; c[i+1]--; rec(m, t+1, pair); c[i]++; c[i+1]++; }
+      if (n <= 6 && c[i+2] > 0) { c[i]--; c[i+2]--; rec(m, t+1, pair); c[i]++; c[i+2]++; }
+    }
+  })(0, 0, 0);
+  return min;
+}
+function shanten(counts){
+  let best = generalShanten(counts);
+  let pairs = 0, uniq = 0;
+  for (let i = 0; i < 34; i++) { if (counts[i] > 0) uniq++; if (counts[i] >= 2) pairs++; }
+  best = Math.min(best, 6 - pairs + Math.max(0, 7 - uniq));            // 七対子
+  const TERM = [0,8,9,17,18,26,27,28,29,30,31,32,33];
+  let t = 0, hp = 0;
+  TERM.forEach(i => { if (counts[i] > 0) t++; if (counts[i] >= 2) hp = 1; });
+  best = Math.min(best, 13 - t - hp);                                   // 国士無双
+  return best;
+}
+
+/* ============================================================
+   あがり形の分解（4面子＋1雀頭）
+   ============================================================ */
+function decompose(counts){
+  const results = [];
+  for (let p = 0; p < 34; p++) {
+    if (counts[p] < 2) continue;
+    const c = counts.slice(); c[p] -= 2;
+    (function rec(rest, sets){
+      let i = 0; while (i < 34 && rest[i] === 0) i++;
+      if (i === 34) { results.push({ pair: p, sets: sets.slice() }); return; }
+      if (rest[i] >= 3) {
+        rest[i] -= 3; sets.push({ type: "pon", tile: i });
+        rec(rest, sets); sets.pop(); rest[i] += 3;
+      }
+      if (i < 27 && (i % 9) <= 6 && rest[i+1] > 0 && rest[i+2] > 0) {
+        rest[i]--; rest[i+1]--; rest[i+2]--; sets.push({ type: "seq", tile: i });
+        rec(rest, sets); sets.pop(); rest[i]++; rest[i+1]++; rest[i+2]++;
+      }
+    })(c, []);
+  }
+  return results;
+}
+function isWinning(counts){
+  let pairs = 0, uniq = 0;
+  for (let i = 0; i < 34; i++) { if (counts[i] === 2) pairs++; if (counts[i] > 0) uniq++; }
+  if (pairs === 7 && uniq === 7) return true;                            // 七対子
+  const TERM = [0,8,9,17,18,26,27,28,29,30,31,32,33];
+  let only = true, t = 0;
+  for (let i = 0; i < 34; i++) if (counts[i] > 0 && TERM.indexOf(i) < 0) only = false;
+  TERM.forEach(i => { if (counts[i] > 0) t++; });
+  if (only && t === 13) return true;                                     // 国士無双
+  return decompose(counts).length > 0;
+}
+function waitsOf(tiles13){
+  const counts = countsOf(tiles13), waits = [];
+  for (let i = 0; i < 34; i++) {
+    if (counts[i] >= 4) continue;
+    counts[i]++;
+    if (isWinning(counts)) waits.push(i);
+    counts[i]--;
+  }
+  return waits;
+}
+
+/* ============================================================
+   点数計算（翻・符 → 点数）
+   ============================================================ */
+function ceil100(x){ return Math.ceil(x / 100) * 100; }
+function scoreFromHanFu(han, fu, dealer, tsumo, yakuman){
+  let base;
+  if (yakuman > 0) base = 8000 * yakuman;
+  else if (han >= 13) base = 8000;
+  else if (han >= 11) base = 6000;
+  else if (han >= 8) base = 4000;
+  else if (han >= 6) base = 3000;
+  else if (han >= 5) base = 2000;
+  else { base = fu * Math.pow(2, han + 2); if (base > 2000) base = 2000; }
+  if (tsumo) {
+    if (dealer) { const p = ceil100(base * 2); return { text: p.toLocaleString() + " オール", total: p * 3, all: p }; }
+    const pd = ceil100(base * 2), pc = ceil100(base);
+    return { text: pc.toLocaleString() + " / " + pd.toLocaleString(), total: pd + pc * 2, child: pc, dealerPay: pd };
+  }
+  const p = ceil100(base * (dealer ? 6 : 4));
+  return { text: p.toLocaleString() + " 点", total: p, ron: p };
+}
+function limitName(han, fu, yakuman){
+  if (yakuman >= 2) return "ダブル役満";
+  if (yakuman === 1) return "役満";
+  if (han >= 13) return "数え役満";
+  if (han >= 11) return "三倍満";
+  if (han >= 8) return "倍満";
+  if (han >= 6) return "跳満";
+  if (han >= 5 || (han === 4 && fu >= 40) || (han === 3 && fu >= 70)) return "満貫";
+  return "";
+}
+
+/* ============================================================
+   役・符の判定（門前・リーチ済み手牌専用）
+   ctx: { winTile, tsumo, bakaze, jikaze, akaCount }
+   ============================================================ */
+function evaluateHand(tiles14, ctx){
+  const counts = countsOf(tiles14);
+  const w = tileBase(ctx.winTile);
+  const dealer = ctx.jikaze === 27;
+  const allTiles = []; counts.forEach((n, i) => { for (let k = 0; k < n; k++) allTiles.push(i); });
+  const hasYaochu = allTiles.some(isYaochu);
+  const hasHonor = allTiles.some(isHonor);
+  const suitsUsed = [0,1,2].filter(s => allTiles.some(t => suitOf(t) === s));
+  const tanyao = !hasYaochu;
+  const honitsu = suitsUsed.length === 1 && hasHonor;
+  const chinitsu = suitsUsed.length === 1 && !hasHonor;
+
+  function finish(yaku, fu, yakuman){
+    const han = yaku.reduce((a, y) => a + y.han, 0);
+    const sc = scoreFromHanFu(han, fu, dealer, ctx.tsumo, yakuman || 0);
+    return { yaku, han, fu, yakuman: yakuman || 0, score: sc, limit: limitName(han, fu, yakuman || 0), dealer };
+  }
+  function addCommon(yaku){
+    yaku.push({ name: "リーチ", han: 1 });
+    if (ctx.tsumo) yaku.push({ name: "門前清自摸和", han: 1 });
+    if (tanyao) yaku.push({ name: "断ヤオ九", han: 1 });
+    if (honitsu) yaku.push({ name: "混一色", han: 3 });
+    if (chinitsu) yaku.push({ name: "清一色", han: 6 });
+    if (ctx.akaCount > 0) yaku.push({ name: "赤ドラ", han: ctx.akaCount });
+  }
+
+  /* --- 国士無双 --- */
+  const TERM = [0,8,9,17,18,26,27,28,29,30,31,32,33];
+  if (allTiles.every(t => TERM.indexOf(t) >= 0) && TERM.every(t => counts[t] >= 1)) {
+    return finish([{ name: "国士無双", han: 0 }], 0, 1);
+  }
+  /* --- 七対子 --- */
+  let pairs = 0, uniq = 0;
+  for (let i = 0; i < 34; i++) { if (counts[i] === 2) pairs++; if (counts[i] > 0) uniq++; }
+  let chiitoiResult = null;
+  if (pairs === 7 && uniq === 7) {
+    const yaku = [];
+    addCommon(yaku);
+    yaku.push({ name: "七対子", han: 2 });
+    if (allTiles.every(isYaochu)) yaku.push({ name: "混老頭", han: 2 });
+    chiitoiResult = finish(yaku, 25, 0);
+  }
+
+  /* --- 通常形 --- */
+  // 13枚時点が「6対子＋単騎」の形なら待ちは単騎扱い（平和はつかない）
+  const counts13 = counts.slice(); counts13[w]--;
+  let pairs13 = 0, single13 = -1;
+  for (let i = 0; i < 34; i++) {
+    if (counts13[i] === 2) pairs13++;
+    else if (counts13[i] === 1) { if (single13 === -1) single13 = i; else single13 = -2; }
+    else if (counts13[i] > 0) single13 = -2;
+  }
+  const tankiWait = pairs13 === 6 && single13 === w;
+  const decomps = decompose(counts);
+  let best = null;
+  decomps.forEach(d => {
+    // あがり牌が含まれる面子／雀頭の位置をすべて試す
+    const spots = [];
+    d.sets.forEach((s, si) => {
+      if (s.type === "pon" && s.tile === w) spots.push(si);
+      if (s.type === "seq" && w >= s.tile && w <= s.tile + 2) spots.push(si);
+    });
+    if (d.pair === w) spots.push(-1);
+    spots.forEach(spot => {
+      const sets = d.sets.map((s, si) => {
+        const ankou = s.type === "pon" ? !(si === spot && !ctx.tsumo) : false;
+        return { type: s.type, tile: s.tile, ankou };
+      });
+      let waitType = "shanpon";
+      if (tankiWait) waitType = "tanki";
+      else if (spot === -1) waitType = "tanki";
+      else if (sets[spot] && sets[spot].type === "seq") {
+        const t = sets[spot].tile;
+        if (w === t + 1) waitType = "kanchan";
+        else if (w === t && (t % 9) === 6) waitType = "penchan";
+        else if (w === t + 2 && (t % 9) === 0) waitType = "penchan";
+        else waitType = "ryanmen";
+      }
+      const yaku = [];
+      addCommon(yaku);
+      const pons = sets.filter(s => s.type === "pon");
+      const seqs = sets.filter(s => s.type === "seq");
+      // 役牌
+      pons.forEach(s => {
+        if (s.tile >= 31) yaku.push({ name: "役牌 " + HONOR[s.tile-27], han: 1 });
+        else if (s.tile === ctx.bakaze && s.tile === ctx.jikaze) { yaku.push({ name: "役牌 場風", han: 1 }); yaku.push({ name: "役牌 自風", han: 1 }); }
+        else if (s.tile === ctx.bakaze) yaku.push({ name: "役牌 場風", han: 1 });
+        else if (s.tile === ctx.jikaze) yaku.push({ name: "役牌 自風", han: 1 });
+      });
+      // 平和
+      const pairValue = d.pair >= 31 || d.pair === ctx.bakaze || d.pair === ctx.jikaze;
+      const pinfu = seqs.length === 4 && !pairValue && waitType === "ryanmen";
+      if (pinfu) yaku.push({ name: "平和", han: 1 });
+      // 一盃口・二盃口
+      const seqSig = {};
+      seqs.forEach(s => { const k = s.tile; seqSig[k] = (seqSig[k] || 0) + 1; });
+      const seqPairs = Object.values(seqSig).reduce((a, n) => a + Math.floor(n / 2), 0);
+      if (seqPairs >= 2) yaku.push({ name: "二盃口", han: 3 });
+      else if (seqPairs === 1) yaku.push({ name: "一盃口", han: 1 });
+      // 三色同順・三色同刻・一気通貫
+      const seqNums = { 0: [], 1: [], 2: [] }, ponNums = { 0: [], 1: [], 2: [] };
+      seqs.forEach(s => seqNums[suitOf(s.tile)].push(numOf(s.tile)));
+      pons.forEach(s => { if (!isHonor(s.tile)) ponNums[suitOf(s.tile)].push(numOf(s.tile)); });
+      for (let n = 1; n <= 7; n++) if ([0,1,2].every(s => seqNums[s].indexOf(n) >= 0)) { yaku.push({ name: "三色同順", han: 2 }); break; }
+      for (let n = 1; n <= 9; n++) if ([0,1,2].every(s => ponNums[s].indexOf(n) >= 0)) { yaku.push({ name: "三色同刻", han: 2 }); break; }
+      for (let s = 0; s < 3; s++) if ([1,4,7].every(n => seqNums[s].indexOf(n) >= 0)) { yaku.push({ name: "一気通貫", han: 2 }); break; }
+      // チャンタ系
+      const allWithYao = sets.every(s => isYaochu(s.tile) || (s.type === "seq" && (numOf(s.tile) === 1 || numOf(s.tile) === 7))) && isYaochu(d.pair);
+      const junchanCheck = sets.every(s => {
+        if (s.type === "pon") return isTerminal(s.tile);
+        return numOf(s.tile) === 1 || numOf(s.tile) === 7;
+      }) && isTerminal(d.pair);
+      if (allTiles.every(isYaochu)) {
+        if (pons.length === 4) { /* 混老頭は対々と複合 */ yaku.push({ name: "混老頭", han: 2 }); }
+      } else if (junchanCheck && seqs.length >= 1) {
+        yaku.push({ name: "純全帯ヤオ九", han: 3 });
+      } else if (allWithYao && seqs.length >= 1) {
+        yaku.push({ name: "混全帯ヤオ九", han: 2 });
+      }
+      // 対々・三暗刻・小三元
+      if (pons.length === 4) yaku.push({ name: "対々和", han: 2 });
+      const ankouCount = sets.filter(s => s.ankou).length;
+      if (ankouCount === 3) yaku.push({ name: "三暗刻", han: 2 });
+      const dragonPons = pons.filter(s => s.tile >= 31).length;
+      if (dragonPons === 2 && d.pair >= 31) yaku.push({ name: "小三元", han: 2 });
+
+      /* 役満 */
+      let yakuman = 0; const ymNames = [];
+      if (ankouCount === 4) { yakuman = 1; ymNames.push("四暗刻"); }
+      if (dragonPons === 3) { yakuman = 1; ymNames.push("大三元"); }
+      if (allTiles.every(isHonor)) { yakuman = 1; ymNames.push("字一色"); }
+      if (allTiles.every(isTerminal) && pons.length === 4) { yakuman = 1; ymNames.push("清老頭"); }
+      let candidate;
+      if (yakuman > 0) {
+        candidate = finish(ymNames.map(n => ({ name: n, han: 0 })), 0, yakuman);
+      } else {
+        /* 符計算 */
+        let fu = 20;
+        if (!ctx.tsumo) fu += 10;                     // 門前加符
+        if (ctx.tsumo && !pinfu) fu += 2;             // ツモ符
+        sets.forEach(s => {
+          if (s.type !== "pon") return;
+          const base = isYaochu(s.tile) ? 4 : 2;
+          fu += s.ankou ? base * 2 : base;
+        });
+        if (d.pair >= 31) fu += 2;
+        if (d.pair === ctx.bakaze) fu += 2;
+        if (d.pair === ctx.jikaze) fu += 2;
+        if (waitType === "tanki" || waitType === "kanchan" || waitType === "penchan") fu += 2;
+        if (pinfu && ctx.tsumo) fu = 20;
+        else fu = Math.ceil(fu / 10) * 10;
+        if (!ctx.tsumo && fu < 30) fu = 30;
+        candidate = finish(yaku, fu, 0);
+      }
+      if (!best || candidate.yakuman > best.yakuman ||
+          (candidate.yakuman === best.yakuman && (candidate.han > best.han ||
+           (candidate.han === best.han && candidate.fu > best.fu)))) best = candidate;
+    });
+  });
+  if (chiitoiResult && (!best || chiitoiResult.han > best.han)) return chiitoiResult;
+  return best;
+}
+
+/* ============================================================
+   タブ切り替え
+   ============================================================ */
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab-btn").forEach(b => b.setAttribute("aria-selected", b === btn ? "true" : "false"));
+    ["seisan", "table", "camera"].forEach(name => {
+      document.getElementById("tab-" + name).hidden = name !== btn.dataset.tab;
+    });
+    window.scrollTo({ top: 0 });
+  });
+});
+
+/* ============================================================
+   点数精算（履歴つき）
+   ============================================================ */
+let historyRounds = [];   // 各回の素点 [s0,s1,s2,s3] を保持し、表示時に変換する
+let historyAutoIndices = []; // 各回で自動計算されたプレイヤーの番号（最後に記入する人。-1 = 自動計算なし）
+let editingIndex = -1;      // 編集中の回の番号（-1 = 新規記入）
+let playerCount = 4;        // 対戦人数（3 = 三人麻雀 / 4 = 四人麻雀）
+let editingPastId = null;   // タイトル編集中の過去の対戦id
+const pastMatches = [];     // 過去の対戦（ページ内のみ保持）
+let currentMatchId = null;  // 表示中の対戦が pastMatches のどれか
+let matchSeq = 0;
+const historyBody = document.getElementById("history-body");
+const historyEmpty = document.getElementById("history-empty");
+const clearHistoryBtn = document.getElementById("clear-history");
+const clearConfirmBox = document.getElementById("clear-confirm");
+const clearConfirmText = document.getElementById("clear-confirm-text");
+const rowDelConfirmBox = document.getElementById("row-del-confirm");
+const rowDelConfirmText = document.getElementById("row-del-confirm-text");
+let pendingDeleteIndex = -1;
+function hideRowDelConfirm(){
+  pendingDeleteIndex = -1;
+  if (rowDelConfirmBox) rowDelConfirmBox.hidden = true;
+}
+function requestDeleteRow(ri){
+  pendingDeleteIndex = ri;
+  rowDelConfirmText.textContent = (ri + 1) + "回目の記録を削除しますか？消した記録は元に戻せません。";
+  rowDelConfirmBox.hidden = false;
+  rowDelConfirmBox.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  document.getElementById("row-del-confirm-no").focus({ preventScroll: true });
+}
+function roundHalfAway(x){ return x >= 0 ? Math.round(x) : -Math.round(-x); }
+function fmtPt(v){
+  const s = v > 0 ? "+" : v < 0 ? "−" : "±";
+  return s + Math.abs(v).toFixed(1);
+}
+function ptClass(v){ return v > 0 ? "plus" : v < 0 ? "minus" : "zero"; }
+function startPoints(){ return playerCount === 3 ? 35000 : 25000; }
+function totalTarget(){ return startPoints() * playerCount; }
+function umaByRank(){
+  const v = document.getElementById("uma-select").value;
+  if (playerCount === 3) {
+    if (v === "s5-10") return [10, -5, -5];
+    if (v === "s15-30") return [30, -15, -15];
+    if (v === "s0-0") return [0, 0, 0];
+    return [20, -10, -10]; // s10-20
+  }
+  const parts = v.split("-").map(Number);
+  const u2 = parts[0], u1 = parts[1];
+  return [u1, u2, -u2, -u1];
+}
+function computeFinals(scores){
+  const kaeshi = parseInt(document.getElementById("kaeshi-select").value, 10);
+  const umaRank = umaByRank();
+  const oka = (kaeshi - startPoints()) * playerCount / 1000;
+  // 順位（同点はグループ化し、ウマとオカを等分）
+  const n = scores.length;
+  const order = scores.map((s, i) => i).sort((a, b) => scores[b] - scores[a]);
+  const finalOf = new Array(n);
+  let r = 0;
+  while (r < n) {
+    let r2 = r;
+    while (r2 + 1 < n && scores[order[r2 + 1]] === scores[order[r]]) r2++;
+    const group = order.slice(r, r2 + 1);
+    let umaSum = 0;
+    for (let k = r; k <= r2; k++) umaSum += umaRank[k];
+    const umaShare = umaSum / group.length;
+    const okaShare = r === 0 ? oka / group.length : 0;
+    group.forEach(i => {
+      const base = roundHalfAway((scores[i] - kaeshi) / 1000);
+      finalOf[i] = base + umaShare + okaShare;
+    });
+    r = r2 + 1;
+  }
+  return finalOf;
+}
+function renderHistory(){
+  historyBody.innerHTML = "";
+  const totals = new Array(playerCount).fill(0);
+  historyRounds.forEach((scores, ri) => {
+    const finals = computeFinals(scores);
+    finals.forEach((v, i) => { totals[i] += v; });
+    const tr = document.createElement("tr");
+    if (ri === editingIndex) tr.className = "editing-row";
+    tr.title = "タップして編集";
+    let html = '<th>' + (ri + 1) + '</th>';
+    finals.forEach(v => { html += '<td class="' + ptClass(v) + '">' + fmtPt(v) + "</td>"; });
+    html += '<td class="del-cell"><button type="button" class="row-del" aria-label="' + (ri + 1) + '回目を削除">×</button></td>';
+    tr.innerHTML = html;
+    tr.querySelector(".row-del").addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      requestDeleteRow(ri);
+    });
+    tr.addEventListener("click", () => openEntry(ri));
+    historyBody.appendChild(tr);
+  });
+  totals.forEach((v, i) => {
+    const cell = document.getElementById("total-pt-" + i);
+    if (cell) { cell.textContent = fmtPt(v); cell.className = ptClass(v); }
+  });
+  // 現在トップのプレイヤーの名前に👑を付ける（同点トップは全員、全員同点・記録なしのときは付けない）
+  if (totals.length > 0) {
+    const maxTotal = Math.max.apply(null, totals);
+    const allTied = totals.every(v => v === totals[0]);
+    for (let i = 0; i < playerCount; i++) {
+      const crown = document.getElementById("crown-" + i);
+      if (crown) crown.hidden = !(historyRounds.length > 0 && !allTied && totals[i] === maxTotal);
+    }
+  }
+  historyEmpty.hidden = historyRounds.length > 0;
+  clearHistoryBtn.hidden = historyRounds.length === 0;
+  if (historyRounds.length === 0) { clearConfirmBox.hidden = true; hideRowDelConfirm(); }
+  else if (pendingDeleteIndex >= historyRounds.length) hideRowDelConfirm();
+  renderPastList();
+}
+document.getElementById("uma-select").addEventListener("change", () => { updateModeTexts(); renderHistory(); syncPast(); });
+document.getElementById("kaeshi-select").addEventListener("change", () => { updateModeTexts(); renderHistory(); syncPast(); });
+clearHistoryBtn.addEventListener("click", () => {
+  clearConfirmText.textContent = historyRounds.length + "回分の記録をすべて消しますか？消した記録は元に戻せません。";
+  clearConfirmBox.hidden = false;
+  clearConfirmBox.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  document.getElementById("clear-confirm-no").focus({ preventScroll: true });
+});
+document.getElementById("clear-confirm-no").addEventListener("click", () => {
+  clearConfirmBox.hidden = true;
+  clearHistoryBtn.focus({ preventScroll: true });
+});
+document.getElementById("clear-confirm-yes").addEventListener("click", () => {
+  clearConfirmBox.hidden = true;
+  hideRowDelConfirm();
+  historyRounds = [];
+  historyAutoIndices = [];
+  editingIndex = -1;
+  entryCard.hidden = true;
+  syncPast();
+  renderHistory();
+});
+document.getElementById("row-del-confirm-no").addEventListener("click", () => {
+  hideRowDelConfirm();
+});
+document.getElementById("row-del-confirm-yes").addEventListener("click", () => {
+  const ri = pendingDeleteIndex;
+  hideRowDelConfirm();
+  if (ri < 0 || ri >= historyRounds.length) return;
+  historyRounds.splice(ri, 1);
+  historyAutoIndices.splice(ri, 1);
+  if (editingIndex === ri) { editingIndex = -1; entryCard.hidden = true; }
+  else if (editingIndex > ri) editingIndex--;
+  syncPast();
+  renderHistory();
+});
+
+/* --- 過去の対戦：記入を完了するたびに自動で保存される --- */
+function defaultMatchName(){
+  const d = new Date();
+  const p = n => String(n).padStart(2, "0");
+  return d.getFullYear() + "/" + p(d.getMonth() + 1) + "/" + p(d.getDate()) + " " + p(d.getHours()) + ":" + p(d.getMinutes()) + " の対戦";
+}
+function syncPast(){
+  if (historyRounds.length === 0) {
+    if (currentMatchId !== null) {
+      const ix = pastMatches.findIndex(m => m.id === currentMatchId);
+      if (ix >= 0) pastMatches.splice(ix, 1);
+      currentMatchId = null;
+    }
+    renderPastList();
+    return;
+  }
+  const snapshot = {
+    rounds: historyRounds.map(r => r.slice()),
+    autoIndices: historyAutoIndices.slice(),
+    names: Array.from({ length: playerCount }, (_, i) => playerName(i)),
+    players: playerCount,
+    uma: document.getElementById("uma-select").value,
+    kaeshi: document.getElementById("kaeshi-select").value
+  };
+  if (currentMatchId === null) {
+    currentMatchId = ++matchSeq;
+    pastMatches.push(Object.assign({ id: currentMatchId, name: defaultMatchName() }, snapshot));
+  } else {
+    const m = pastMatches.find(x => x.id === currentMatchId);
+    if (m) Object.assign(m, snapshot);
+    else pastMatches.push(Object.assign({ id: currentMatchId, name: defaultMatchName() }, snapshot));
+  }
+  renderPastList();
+}
+function renderPastList(){
+  const list = document.getElementById("past-list");
+  const empty = document.getElementById("past-empty");
+  if (!list || !empty) return;
+  empty.hidden = pastMatches.length > 0;
+  list.innerHTML = "";
+  pastMatches.forEach(m => {
+    const item = document.createElement("div");
+    item.className = "past-item" + (m.id === currentMatchId ? " active" : "");
+    if (editingPastId === m.id) {
+      item.innerHTML = '<span class="past-rename"><input type="text" class="past-rename-input" aria-label="対戦名" /><button type="button" class="btn primary past-rename-save">保存</button><button type="button" class="btn past-rename-cancel">キャンセル</button></span>';
+      const inp = item.querySelector(".past-rename-input");
+      inp.value = m.name;
+      item.querySelector(".past-rename-save").addEventListener("click", () => {
+        const v = inp.value.trim();
+        if (v) m.name = v;
+        editingPastId = null;
+        renderPastList();
+      });
+      item.querySelector(".past-rename-cancel").addEventListener("click", () => {
+        editingPastId = null;
+        renderPastList();
+      });
+      inp.addEventListener("keydown", (ev) => {
+        if (ev.key === "Enter") { ev.preventDefault(); item.querySelector(".past-rename-save").click(); }
+      });
+    } else {
+      item.innerHTML = '<button type="button" class="past-load"><span class="past-name"></span><span class="past-meta"></span></button>' +
+        '<button type="button" class="past-edit-btn" aria-label="対戦名を変更"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg></button>';
+      item.querySelector(".past-name").textContent = m.name;
+      item.querySelector(".past-meta").textContent = (m.players === 3 ? "三人" : "四人") + "・全" + m.rounds.length + "回";
+      item.querySelector(".past-load").addEventListener("click", () => loadPastMatch(m.id));
+      item.querySelector(".past-edit-btn").addEventListener("click", () => {
+        editingPastId = m.id;
+        renderPastList();
+        const inp = list.querySelector(".past-rename-input");
+        if (inp) { inp.focus(); inp.select(); }
+      });
+    }
+    list.appendChild(item);
+  });
+}
+function loadPastMatch(id){
+  const m = pastMatches.find(x => x.id === id);
+  if (!m) return;
+  hideRowDelConfirm();
+  editingPastId = null;
+  currentMatchId = m.id;
+  historyRounds = m.rounds.map(r => r.slice());
+  historyAutoIndices = (m.autoIndices ? m.autoIndices.slice() : historyRounds.map(() => -1));
+  editingIndex = -1;
+  entryCard.hidden = true;
+  playerCount = m.players === 3 ? 3 : 4;
+  buildSettingOptions();
+  document.getElementById("uma-select").value = m.uma;
+  document.getElementById("kaeshi-select").value = m.kaeshi;
+  setNames(m.names);
+  renderNameHeader();
+  updateModeTexts();
+  renderHistory();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+document.getElementById("past-toggle").addEventListener("click", () => {
+  const list = document.getElementById("past-list");
+  const open = list.hidden;
+  list.hidden = !open;
+  document.getElementById("past-toggle").setAttribute("aria-expanded", open ? "true" : "false");
+  if (open) renderPastList();
+});
+
+/* --- 人数に応じた設定（ウマ・返し点の選択肢）と表の見出し --- */
+function buildSettingOptions(){
+  const uma = document.getElementById("uma-select");
+  const kae = document.getElementById("kaeshi-select");
+  if (playerCount === 3) {
+    uma.innerHTML = '<option value="s5-10">5−10（1位+10／2位−5／3位−5）</option>' +
+      '<option value="s10-20" selected>10−20（1位+20／2位−10／3位−10）</option>' +
+      '<option value="s15-30">15−30（1位+30／2位−15／3位−15）</option>' +
+      '<option value="s0-0">なし</option>';
+    kae.innerHTML = '<option value="40000" selected>40,000点（35,000点持ち）</option>' +
+      '<option value="35000">35,000点（オカなし）</option>';
+  } else {
+    uma.innerHTML = '<option value="10-20">10−20（ゴットー）</option>' +
+      '<option value="10-30" selected>10−30（ワンスリー）</option>' +
+      '<option value="20-30">20−30</option>' +
+      '<option value="5-10">5−10</option>' +
+      '<option value="0-0">なし</option>';
+    kae.innerHTML = '<option value="30000" selected>30,000点（25,000点持ち）</option>' +
+      '<option value="25000">25,000点（オカなし）</option>';
+  }
+  document.getElementById("sanma-note").hidden = playerCount !== 3;
+  document.getElementById("mode-label").textContent = playerCount === 3 ? "三人麻雀" : "四人麻雀";
+  updateModeTexts();
+}
+function updateModeTexts(){
+  const label = document.getElementById("entry-total-label");
+  if (label) label.textContent = playerCount + "人の合計";
+  const kaeshi = parseInt(document.getElementById("kaeshi-select").value, 10);
+  const oka = (kaeshi - startPoints()) * playerCount / 1000;
+  const note = document.getElementById("calc-note");
+  if (note) note.textContent = "計算方法：（点数 − 返し点）÷ 1,000 を四捨五入した素点に、順位ウマを加え、1位にはオカ（（返し点 − " + startPoints().toLocaleString() + "）× " + playerCount + " ÷ 1,000 = " + oka.toFixed(1) + "）を加えます。同点の場合はウマとオカを等分します。ウマ・返し点を変更すると、記録済みの回も新しい設定で計算し直します。各行の右端の「×」でその回だけ削除でき（押すと確認が出ます）、行をタップするとその回を編集できます。";
+  const en = document.getElementById("entry-note");
+  if (en) en.textContent = "対局後の持ち点を入れて「この回を記録する」を押すと、＋○○／−○○に変換して上の表に追加します。入力欄の上下ボタンでは100点ずつ変わります。どのプレイヤーから入力しても構いません。" +
+    (playerCount === 3
+      ? "あと1人だけ入力していない状態になると、その残りの1人（最後に記入する人）の点数が合計105,000点になるよう自動で計算されて入り、「自動計算」の印が付きます。"
+      : "あと1人だけ入力していない状態になると、その残りの1人（最後に記入する人）の点数が合計100,000点になるよう自動で計算されて入り、「自動計算」の印が付きます。") +
+    "自動計算された人を手で直すと自動計算は解除されます。表の行をタップして開いた場合は、その回の編集になります（入力した値が入った状態で開きます）。";
+}
+function renderNameHeader(){
+  const head = document.getElementById("history-head");
+  const foot = document.getElementById("history-foot");
+  if (!head) return;
+  let hh = '<tr><th style="width:3em;">回</th>';
+  for (let i = 0; i < playerCount; i++) {
+    hh += '<th><span class="name-cell"><span class="crown" id="crown-' + i + '" hidden>👑</span>' +
+      '<input class="name-input" id="name-' + i + '" type="text" aria-label="プレイヤー' + (i + 1) + 'の名前" /></span></th>';
+  }
+  hh += '<th class="del-head" aria-hidden="true"></th></tr>';
+  hh += '<tr class="total-row"><th>合計</th>';
+  for (let i = 0; i < playerCount; i++) hh += '<td id="total-pt-' + i + '" class="zero">±0.0</td>';
+  hh += '<td class="del-cell"></td></tr>';
+  head.innerHTML = hh;
+  if (foot) foot.innerHTML = "";
+  head.querySelectorAll(".name-input").forEach((inp, i) => {
+    inp.value = currentNames[i];
+    inp.placeholder = DEFAULT_NAMES[i];
+    inp.addEventListener("focus", () => {
+      if (!nameEdited[i] && inp.value === DEFAULT_NAMES[i]) { inp.value = ""; currentNames[i] = ""; }
+      nameEdited[i] = true;
+    });
+    inp.addEventListener("input", () => {
+      currentNames[i] = inp.value;
+      if (currentMatchId !== null) syncPast();
+    });
+  });
+}
+
+/* --- 新規：まず三人／四人を選び、選んだ人数で初期化する（過去の対戦は残る） --- */
+document.getElementById("new-match").addEventListener("click", () => {
+  const panel = document.getElementById("new-choice");
+  panel.hidden = !panel.hidden;
+  if (!panel.hidden) panel.scrollIntoView({ block: "nearest", behavior: "smooth" });
+});
+document.getElementById("new-cancel").addEventListener("click", () => {
+  document.getElementById("new-choice").hidden = true;
+});
+function startNewMatch(count){
+  playerCount = count;
+  historyRounds = [];
+  historyAutoIndices = [];
+  currentMatchId = null;
+  editingIndex = -1;
+  editingPastId = null;
+  entryCard.hidden = true;
+  clearConfirmBox.hidden = true;
+  hideRowDelConfirm();
+  document.getElementById("new-choice").hidden = true;
+  buildSettingOptions();
+  resetNames();
+  renderNameHeader();
+  renderHistory();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+document.getElementById("new-4p").addEventListener("click", () => startNewMatch(4));
+document.getElementById("new-3p").addEventListener("click", () => startNewMatch(3));
+
+/* プレイヤー名：初回編集時はデフォルト名（プレイヤー1など）を自動で消して空から入力でき、
+   2回目以降の編集では今の名前をそのまま残し、全選択もしないので一部だけ直せる */
+const DEFAULT_NAMES = ["プレイヤー1", "プレイヤー2", "プレイヤー3", "プレイヤー4"];
+const nameEdited = [false, false, false, false];
+const currentNames = DEFAULT_NAMES.slice();
+function resetNames(){
+  for (let i = 0; i < 4; i++) { currentNames[i] = DEFAULT_NAMES[i]; nameEdited[i] = false; }
+  document.querySelectorAll(".name-input").forEach((inp, i) => { inp.value = currentNames[i]; });
+}
+function setNames(names){
+  for (let i = 0; i < 4; i++) {
+    currentNames[i] = (names && names[i]) || DEFAULT_NAMES[i];
+    nameEdited[i] = currentNames[i] !== DEFAULT_NAMES[i];
+  }
+  document.querySelectorAll(".name-input").forEach((inp, i) => { inp.value = currentNames[i]; });
+}
+
+/* --- 記入パネル --- */
+const entryCard = document.getElementById("entry-card");
+const entryRows = document.getElementById("entry-rows");
+const entryTitle = document.getElementById("entry-title");
+const entrySaveBtn = document.getElementById("entry-save");
+function playerName(i){
+  const inp = document.getElementById("name-" + i);
+  const v = (inp ? inp.value : (currentNames[i] || "")).trim();
+  return v || ("プレイヤー" + (i + 1));
+}
+function updateEntryTotal(){
+  let total = 0, any = false;
+  entryRows.querySelectorAll(".entry-score").forEach(el => {
+    if (el.value !== "") any = true;
+    const v = parseInt(el.value, 10);
+    if (!isNaN(v)) total += v;
+  });
+  document.getElementById("entry-total").textContent = total.toLocaleString() + "点";
+  const warn = document.getElementById("entry-warn");
+  warn.textContent = "合計が" + totalTarget().toLocaleString() + "点になっていません。入力した点数を確認してください（このまま記録はできますが、ポイントの合計は0になりません）。";
+  warn.hidden = !any || total === totalTarget();
+}
+/* 自動計算の対象は固定の4番目のプレイヤーではなく、「最後に記入する人」。
+   手で入力した順番を entryTouched に記録し、あと1人だけ未入力になった時点で
+   その残りの1人を対象にして、合計が目標点になるよう自動計算する。
+   例：プレイヤー4→1→2 の順に入力したら、残りのプレイヤー3が自動計算される。 */
+let entryAutoIndex = -1;   // 現在自動計算されているプレイヤーの番号（-1 = なし）
+let entryTouched = [];     // 手で入力したプレイヤーの番号（入力した順）
+function refreshAutoBadge(){
+  entryRows.querySelectorAll(".entry-row").forEach((row, i) => {
+    const badge = row.querySelector(".auto-badge");
+    if (badge) badge.hidden = i !== entryAutoIndex;
+    const inp = row.querySelector(".entry-score");
+    if (inp) inp.classList.toggle("auto-filled", i === entryAutoIndex);
+  });
+}
+function recalcAuto(){
+  if (entryAutoIndex < 0) return;
+  const inputs = Array.from(entryRows.querySelectorAll(".entry-score"));
+  if (inputs.length !== playerCount) return;
+  const others = inputs.filter((_, i) => i !== entryAutoIndex);
+  if (others.some(el => el.value === "" || el.value === null)) return;
+  const vals = others.map(el => parseInt(el.value, 10));
+  if (vals.some(v => isNaN(v))) return;
+  inputs[entryAutoIndex].value = String(totalTarget() - vals.reduce((a, b) => a + b, 0));
+}
+function handleEntryInput(changedIndex){
+  const inputs = Array.from(entryRows.querySelectorAll(".entry-score"));
+  if (changedIndex < 0 || changedIndex >= inputs.length) { updateEntryTotal(); return; }
+  const changed = inputs[changedIndex];
+  if (changedIndex === entryAutoIndex) {
+    // 自動計算された人を手で直したら、自動計算を解除して手入力として扱う
+    if (changed.value !== "") {
+      if (entryTouched.indexOf(changedIndex) < 0) entryTouched.push(changedIndex);
+      entryAutoIndex = -1;
+    }
+    refreshAutoBadge();
+    updateEntryTotal();
+    return;
+  }
+  if (changed.value === "") {
+    entryTouched = entryTouched.filter(i => i !== changedIndex);
+  } else if (entryTouched.indexOf(changedIndex) < 0) {
+    entryTouched.push(changedIndex);
+  }
+  if (entryAutoIndex >= 0) {
+    recalcAuto();
+  } else if (entryTouched.length === playerCount - 1) {
+    let candidate = -1;
+    for (let i = 0; i < playerCount; i++) if (entryTouched.indexOf(i) < 0) candidate = i;
+    if (candidate >= 0) {
+      const touchedVals = entryTouched.map(i => parseInt(inputs[i].value, 10));
+      if (touchedVals.every(v => !isNaN(v))) {
+        entryAutoIndex = candidate;
+        recalcAuto();
+      }
+    }
+  }
+  refreshAutoBadge();
+  updateEntryTotal();
+}
+function openEntry(editIdx){
+  hideRowDelConfirm();
+  editingIndex = (typeof editIdx === "number" && editIdx >= 0 && editIdx < historyRounds.length) ? editIdx : -1;
+  entryTitle.textContent = editingIndex >= 0 ? (editingIndex + 1) + "回目を編集" : (historyRounds.length + 1) + "回目の点数を記入";
+  entrySaveBtn.textContent = editingIndex >= 0 ? "編集を保存する" : "この回を記録する";
+  entryRows.innerHTML = "";
+  for (let i = 0; i < playerCount; i++) {
+    const row = document.createElement("div");
+    row.className = "player-top entry-row";
+    row.style.marginBottom = "8px";
+    row.innerHTML = '<span class="entry-name"></span>' +
+      '<span class="auto-badge" hidden>自動計算</span>' +
+      '<input class="player-score entry-score" type="number" step="100" inputmode="numeric" placeholder="25000" aria-label="点数" />';
+    row.querySelector(".entry-name").textContent = playerName(i);
+    row.querySelector(".entry-score").placeholder = String(startPoints());
+    if (editingIndex >= 0) row.querySelector(".entry-score").value = historyRounds[editingIndex][i];
+    entryRows.appendChild(row);
+  }
+  // 編集時は、その回で自動計算されていた人（最後に記入した人）をそのまま調整対象にする
+  entryAutoIndex = -1;
+  entryTouched = [];
+  if (editingIndex >= 0) {
+    const stored = (typeof historyAutoIndices[editingIndex] === "number") ? historyAutoIndices[editingIndex] : -1;
+    if (stored >= 0 && stored < playerCount) {
+      entryAutoIndex = stored;
+      for (let i = 0; i < playerCount; i++) if (i !== stored) entryTouched.push(i);
+    }
+  }
+  entryCard.hidden = false;
+  refreshAutoBadge();
+  updateEntryTotal();
+  renderHistory();
+  entryCard.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  const first = entryRows.querySelector(".entry-score");
+  if (first) first.focus({ preventScroll: true });
+}
+document.getElementById("open-entry").addEventListener("click", () => openEntry(-1));
+entryRows.addEventListener("input", (ev) => {
+  const inputs = Array.from(entryRows.querySelectorAll(".entry-score"));
+  const idx = inputs.indexOf(ev.target);
+  handleEntryInput(idx);
+});
+entryRows.addEventListener("change", (ev) => {
+  const inputs = Array.from(entryRows.querySelectorAll(".entry-score"));
+  const idx = inputs.indexOf(ev.target);
+  // input イベントで処理済みの場合は二重に処理しない（自動計算の解除が誤作動しないよう、値が変わっていない change は handleEntryInput 側で冪等）
+  handleEntryInput(idx);
+});
+document.getElementById("entry-cancel").addEventListener("click", () => {
+  entryCard.hidden = true;
+  editingIndex = -1;
+  entryAutoIndex = -1;
+  entryTouched = [];
+  renderHistory();
+});
+entrySaveBtn.addEventListener("click", () => {
+  const scores = Array.from(entryRows.querySelectorAll(".entry-score")).map(el => {
+    const v = parseInt(el.value, 10);
+    return isNaN(v) ? 0 : v;
+  });
+  const savedAuto = entryAutoIndex;
+  if (editingIndex >= 0 && editingIndex < historyRounds.length) {
+    historyRounds[editingIndex] = scores;
+    historyAutoIndices[editingIndex] = savedAuto;
+  } else {
+    historyRounds.push(scores);
+    historyAutoIndices.push(savedAuto);
+  }
+  editingIndex = -1;
+  entryAutoIndex = -1;
+  entryTouched = [];
+  entryCard.hidden = true;
+  syncPast();
+  renderHistory();
+  document.getElementById("open-entry").scrollIntoView({ block: "nearest", behavior: "smooth" });
+});
+buildSettingOptions();
+renderNameHeader();
+renderHistory();
+
+/* ============================================================
+   点数表
+   ============================================================ */
+let tblDealer = false;
+const FU_ROWS = [30, 40, 50, 60, 70, 80, 90, 100, 110];
+function buildTable(tsumo){
+  const wrap = document.createElement("div");
+  let html = '<table class="ptable"><caption>' + (tblDealer ? "親" : "子") + "の" + (tsumo ? "ツモ" : "ロン") + '</caption><thead><tr><th>符＼翻</th><th>1翻</th><th>2翻</th><th>3翻</th><th>4翻</th><th>満貫以上</th></tr></thead><tbody>';
+  FU_ROWS.forEach(fu => {
+    html += "<tr><th>" + fu + "符</th>";
+    for (let han = 1; han <= 4; han++) {
+      const sc = scoreFromHanFu(han, fu, tblDealer, tsumo, 0);
+      html += "<td>" + (tsumo ? sc.text.replace(" / ", "・").replace(" オール", "オール") : sc.ron.toLocaleString()) + "</td>";
+    }
+    const m = scoreFromHanFu(5, fu, tblDealer, tsumo, 0);
+    html += "<td>" + (tsumo ? m.text.replace(" / ", "・").replace(" オール", "オール") : m.ron.toLocaleString()) + "</td></tr>";
+  });
+  html += "</tbody></table>";
+  wrap.innerHTML = html;
+  return wrap;
+}
+function renderTables(){
+  const ron = document.getElementById("table-ron");
+  const tsumo = document.getElementById("table-tsumo");
+  ron.innerHTML = ""; tsumo.innerHTML = "";
+  ron.appendChild(buildTable(false));
+  tsumo.appendChild(buildTable(true));
+}
+document.getElementById("tbl-child").addEventListener("click", () => {
+  tblDealer = false;
+  document.getElementById("tbl-child").setAttribute("aria-pressed", "true");
+  document.getElementById("tbl-dealer").setAttribute("aria-pressed", "false");
+  renderTables();
+});
+document.getElementById("tbl-dealer").addEventListener("click", () => {
+  tblDealer = true;
+  document.getElementById("tbl-child").setAttribute("aria-pressed", "false");
+  document.getElementById("tbl-dealer").setAttribute("aria-pressed", "true");
+  renderTables();
+});
+renderTables();
+
+const LIMITS = [
+  ["満貫（5翻）", "子ロン 8,000 ／ 親ロン 12,000"],
+  ["跳満（6〜7翻）", "子ロン 12,000 ／ 親ロン 18,000"],
+  ["倍満（8〜10翻）", "子ロン 16,000 ／ 親ロン 24,000"],
+  ["三倍満（11〜12翻）", "子ロン 24,000 ／ 親ロン 36,000"],
+  ["役満（13翻〜・数え役満）", "子ロン 32,000 ／ 親ロン 48,000"],
+];
+document.getElementById("limit-list").innerHTML = LIMITS.map(l => "<li><strong>" + l[0] + "</strong>：" + l[1] + "</li>").join("");
+
+const calcHan = document.getElementById("calc-han");
+for (let h = 1; h <= 13; h++) {
+  const o = document.createElement("option");
+  o.value = h; o.textContent = h >= 13 ? "13翻以上（役満）" : h + "翻";
+  if (h === 3) o.selected = true;
+  calcHan.appendChild(o);
+}
+const calcFu = document.getElementById("calc-fu");
+[20, 25, 30, 40, 50, 60, 70, 80, 90, 100, 110].forEach(f => {
+  const o = document.createElement("option");
+  o.value = f; o.textContent = f + "符" + (f === 25 ? "（七対子）" : "");
+  if (f === 30) o.selected = true;
+  calcFu.appendChild(o);
+});
+function recalcCalc(){
+  const han = parseInt(calcHan.value, 10);
+  const fu = parseInt(calcFu.value, 10);
+  const dealer = document.getElementById("calc-dealer").value === "1";
+  const tsumo = document.getElementById("calc-tsumo").value === "1";
+  const yakuman = han >= 13 ? 1 : 0;
+  const sc = scoreFromHanFu(han, fu, dealer, tsumo, yakuman);
+  const lim = limitName(han, fu, yakuman);
+  document.getElementById("calc-result").textContent =
+    (lim ? lim + " " : "") + han + "翻" + fu + "符 → " + sc.text + (tsumo && !dealer ? "（子／親の支払い）" : "");
+}
+[calcHan, calcFu, document.getElementById("calc-dealer"), document.getElementById("calc-tsumo")].forEach(el => el.addEventListener("change", recalcCalc));
+recalcCalc();
+
+/* ============================================================
+   手牌計算（タップ入力）
+   ============================================================ */
+
+/* --- 手牌登録 --- */
+let hand = [];            // 牌idの配列（赤5は34-36）
+let winTile = null;       // あがり牌（基本id）
+let lastResultText = "";
+const slotsEl = document.getElementById("hand-slots");
+const countEl = document.getElementById("hand-count");
+
+const paletteEl = document.getElementById("palette");
+const PALETTE = [
+  ["萬子", [0,1,2,3,4,34,5,6,7,8]],
+  ["筒子", [9,10,11,12,13,35,14,15,16,17]],
+  ["索子", [18,19,20,21,22,36,23,24,25,26]],
+  ["字牌", [27,28,29,30,31,32,33]],
+];
+PALETTE.forEach(([label, ids]) => {
+  const row = document.createElement("div");
+  row.className = "palette-row";
+  row.innerHTML = '<span class="palette-label">' + label + "</span>";
+  const tiles = document.createElement("div");
+  tiles.className = "palette-tiles";
+  ids.forEach(id => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "pal-btn"; b.dataset.tile = id;
+    b.setAttribute("aria-label", tileName(id) + "を追加");
+    b.innerHTML = tileHTML(id, true);
+    b.addEventListener("click", () => addTile(id));
+    tiles.appendChild(b);
+  });
+  row.appendChild(tiles);
+  paletteEl.appendChild(row);
+});
+function sortHand(){ hand.sort((a, b) => tileBase(a) - tileBase(b) || a - b); }
+function addTile(id){
+  if (hand.length >= 13) return;
+  const counts = countsOf(hand);
+  if (counts[tileBase(id)] >= 4) return;
+  hand.push(id); sortHand(); renderHand();
+}
+function renderHand(){
+  sortHand();
+  slotsEl.innerHTML = hand.length === 0
+    ? '<span class="empty-msg">まだ牌が登録されていません</span>'
+    : "";
+  hand.forEach((id, idx) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "pal-btn"; b.style.padding = "0";
+    b.setAttribute("aria-label", tileName(id) + "を取り消す");
+    b.innerHTML = tileHTML(id, false);
+    b.addEventListener("click", () => { hand.splice(idx, 1); renderHand(); });
+    slotsEl.appendChild(b);
+  });
+  const n = hand.length;
+  countEl.textContent = n + " / 13枚" + (n === 13 ? "（登録完了）" : "（あと" + (13 - n) + "枚）");
+  countEl.classList.toggle("ok", n === 13);
+  // パレットの無効化（4枚使い切った牌・13枚到達時）
+  const counts = countsOf(hand);
+  paletteEl.querySelectorAll(".pal-btn").forEach(b => {
+    const id = parseInt(b.dataset.tile, 10);
+    b.disabled = n >= 13 || counts[tileBase(id)] >= 4;
+  });
+  renderWaitsAndResult();
+}
+document.getElementById("hand-clear").addEventListener("click", () => { hand = []; winTile = null; renderHand(); });
+
+function currentWaits(){
+  if (hand.length !== 13) return [];
+  return waitsOf(hand);
+}
+function renderWaitsAndResult(){
+  const waitArea = document.getElementById("wait-area");
+  const chipsEl = document.getElementById("win-chips");
+  const resultBody = document.getElementById("result-body");
+  const changeNote = document.getElementById("change-note");
+  chipsEl.innerHTML = "";
+  if (hand.length !== 13) {
+    waitArea.innerHTML = "";
+    winTile = null;
+    resultBody.innerHTML = '<p class="note" style="margin:0;">手牌13枚とあがり牌を選ぶと、役・符・点数を計算します。</p>';
+    changeNote.textContent = "";
+    lastResultText = "";
+    return;
+  }
+  const waits = currentWaits();
+  const counts = countsOf(hand);
+  if (waits.length === 0) {
+    const sh = shanten(counts);
+    waitArea.innerHTML = '<div class="warn">この手牌はテンパイしていません（' + sh + 'シャンテン）。登録した牌を確認してください。</div>';
+    resultBody.innerHTML = '<p class="note" style="margin:0;">テンパイしていないため計算できません。手牌の登録を確認してください。</p>';
+    winTile = null;
+    return;
+  }
+  waitArea.innerHTML = '<p style="font-weight:800; margin:12px 0 0;">待ち牌（' + waits.length + '種）</p><div class="wait-row">' +
+    waits.map(id => '<span class="wait-chip">' + tileHTML(id, true) + tileName(id) + " 残り" + (4 - counts[id]) + "枚</span>").join("") + "</div>";
+  if (winTile === null || waits.indexOf(winTile) < 0) winTile = waits[0];
+  waits.forEach(id => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "win-chip";
+    b.setAttribute("aria-pressed", id === winTile ? "true" : "false");
+    b.innerHTML = tileHTML(id, false) + '<span class="wc-name">' + tileName(id) + "</span>";
+    b.addEventListener("click", () => { winTile = id; renderWaitsAndResult(); });
+    chipsEl.appendChild(b);
+  });
+  // 計算
+  const bakaze = parseInt(document.getElementById("cond-bakaze").value, 10);
+  const jikaze = parseInt(document.getElementById("cond-jikaze").value, 10);
+  const tsumo = document.getElementById("cond-tsumo").value === "1";
+  const tiles14 = hand.concat([winTile]);
+  const akaCount = hand.filter(isRed).length;
+  const res = evaluateHand(tiles14, { winTile, tsumo, bakaze, jikaze, akaCount });
+  if (!res) {
+    resultBody.innerHTML = '<p class="note" style="margin:0;">計算できませんでした。手牌を確認してください。</p>';
+    return;
+  }
+  const yakuHtml = res.yaku.map(y =>
+    '<span class="yaku-chip' + (res.yakuman > 0 ? " yakuman" : "") + '">' + y.name + (res.yakuman > 0 ? "" : " " + y.han + "翻") + "</span>").join("");
+  const scoreLine = res.yakuman > 0
+    ? res.score.text
+    : res.score.text;
+  resultBody.innerHTML =
+    '<div class="result-score">' + (res.limit ? res.limit + " " : "") + scoreLine + "</div>" +
+    '<div class="result-sub">' + (res.dealer ? "親" : "子") + "・" + (tsumo ? "ツモ" : "ロン") + " ／ あがり牌：" + tileName(winTile) + "</div>" +
+    '<div class="yaku-list">' + yakuHtml + "</div>" +
+    '<div class="result-line"><span>合計 ' + (res.yakuman > 0 ? "役満" : res.han + "翻") + "</span>" +
+    (res.yakuman > 0 ? "" : "<span>" + res.fu + "符</span>") +
+    "<span>待ち：" + waits.map(tileName).join("・") + "</span></div>";
+  const resultText = resultBody.textContent;
+  if (lastResultText && lastResultText !== resultText) {
+    changeNote.textContent = "条件が変わったため、結果を再計算しました。";
+    const card = document.getElementById("result-card");
+    card.classList.remove("flash"); void card.offsetWidth; card.classList.add("flash");
+  } else {
+    changeNote.textContent = "";
+  }
+  lastResultText = resultText;
+}
+["cond-bakaze", "cond-jikaze", "cond-tsumo"].forEach(id => {
+  document.getElementById(id).addEventListener("change", renderWaitsAndResult);
+});
+renderHand();
+</script>
+</body>
+</html>
